@@ -32,6 +32,13 @@ app.post("/generate", async (req, res) => {
       });
     }
 
+    if (!GEMINI_API_KEY) {
+      return res.status(500).json({
+        success: false,
+        message: "Gemini API key missing in server"
+      });
+    }
+
     const requestBody = {
       contents: [
         {
@@ -49,11 +56,14 @@ app.post("/generate", async (req, res) => {
 
     const response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify(requestBody)
     });
 
     const data = await response.json();
+    console.log("Gemini raw response:", JSON.stringify(data));
 
     let output = "";
 
@@ -71,7 +81,8 @@ app.post("/generate", async (req, res) => {
     if (!output.trim()) {
       return res.status(500).json({
         success: false,
-        message: "No content generated"
+        message: "Server error from Gemini",
+        raw: data
       });
     }
 
@@ -82,9 +93,10 @@ app.post("/generate", async (req, res) => {
 
   } catch (e) {
     console.error("Generate error:", e);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Server error"
+      message: "Server error",
+      error: e.message
     });
   }
 });
@@ -98,6 +110,13 @@ app.post("/create-order", async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Invalid input"
+      });
+    }
+
+    if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+      return res.status(500).json({
+        success: false,
+        message: "Razorpay keys missing in server"
       });
     }
 
@@ -117,16 +136,17 @@ app.post("/create-order", async (req, res) => {
     });
 
     const data = await response.json();
+    console.log("Razorpay create-order response:", JSON.stringify(data));
 
     if (!data.id) {
       return res.status(500).json({
         success: false,
         message: "Order creation failed",
-        response: data
+        raw: data
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       order_id: data.id,
       amount: data.amount,
@@ -134,11 +154,13 @@ app.post("/create-order", async (req, res) => {
       key_id: RAZORPAY_KEY_ID,
       plan: plan
     });
+
   } catch (e) {
     console.error("Create order error:", e);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Server error"
+      message: "Server error",
+      error: e.message
     });
   }
 });
@@ -161,15 +183,17 @@ app.post("/verify-payment", (req, res) => {
       .digest("hex");
 
     if (generated === razorpay_signature) {
-      res.json({ success: true });
+      return res.json({ success: true });
     } else {
-      res.json({ success: false });
+      return res.json({ success: false });
     }
+
   } catch (e) {
     console.error("Verify error:", e);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Server error"
+      message: "Server error",
+      error: e.message
     });
   }
 });
