@@ -10,12 +10,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-
-const GEMINI_API_KEY = "YOUR_GEMINI_KEY";
-const RAZORPAY_KEY_ID = "YOUR_RAZORPAY_KEY_ID";
-const RAZORPAY_KEY_SECRET = "YOUR_RAZORPAY_SECRET";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
 
 app.get("/", (req, res) => {
   res.json({ success: true, message: "Backend running" });
